@@ -1,11 +1,16 @@
 -- TODO:
---      Save/Load/New
 --      A way to reset sizes/colors to nil
 --      Buttons for Pause, Restart (+ shortcut = space)
 --      Image strips
 
+helpText = [[Hover a value and use your mousewheel to increase/decrease it. Press shift to reduce the amount of change.
+You can also use your left mouse button and 'drag' the value to change it (shift is also usable). 
+Use lctrl+s to save, lctrl+n to copy the current effect to a new file. And use the 'File' slider in the top left to load files.]]
+
 guiElements = {
     -- {label = , tooltip = , value = , min = , max = , delta =, modDelta =, noLineBreak = , key = var, valueMap = , integer = }
+    {label = "File", key = "filename", value = 1, min = 1, max = 1, integer = true, valueMap = {"<unsaved>"}},
+    {},
     {label = "Background color"},
     {label = "R", key = "bgColorR", value = 0, min = 0, max = 255, delta = 10, noLineBreak = true, integer = true},
     {label = "G", key = "bgColorG", value = 0, min = 0, max = 255, delta = 10, noLineBreak = true, integer = true},
@@ -125,7 +130,7 @@ function love.load()
     
     margin = 5
     panelWidth = 300
-    local lineHeight = 20
+    local lineHeight = 21
     local cursorX, cursorY = margin, 5
     for _, line in ipairs(guiElements.lines) do 
         for _, element in ipairs(line) do
@@ -142,6 +147,8 @@ function love.load()
     particleSystem:setPosition((love.window.getWidth() + panelWidth)/2, love.window.getHeight()/2)
     values.offsetX, values.offsetY = initImage:getWidth()/2, initImage:getHeight()/2
     updateParticleSystem()
+
+    updateFileList()
 end
 
 do
@@ -183,13 +190,11 @@ function updateParticleSystem()
         local broken = false
         for c = 1, 4 do 
             local index = (i-1)*4 + c
-            print(index, "color"..i.."_"..channels[c], values["color"..i.."_"..channels[c]])
             colors[index] = values["color"..i.."_"..channels[c]]
             if colors[index] == nil then broken = true; break end
         end
         if broken then break end
     end
-    print("colors", unpack(colors))
     particleSystem:setColors(unpack(colors))
 
     particleSystem:setEmitterLifetime(values.emitterLifetime)
@@ -230,7 +235,6 @@ function updateValue(element)
     local channels = {"r", "g", "b", "a"}
     for c = 1, 4 do
         local key = "color" .. colorIndexElem.value .. "_" .. channels[c]
-        print("updateValue", key)
         guiElements[i+c].key = key; 
         if values[key] == nil then 
             values[key] = guiElements[i+c].value 
@@ -248,18 +252,87 @@ function updateValue(element)
         guiElements[j+1].value = values[key]
     end
 
+    local file = guiElements[1].valueMap[guiElements[1].value]
+    if currentFile ~= file and file ~= "<unsaved>" then 
+        currentFile = file
+        load()
+    end 
+
     updateParticleSystem()
+end
+
+function updateFileList()
+    guiElements[1].valueMap = love.filesystem.getDirectoryItems("saved")
+    guiElements[1].max = #guiElements[1].valueMap
+    if currentFile then 
+        for i, file in ipairs(guiElements[1].valueMap) do 
+            if file == currentFile then 
+                guiElements[1].value = i
+            end
+        end 
+    else 
+        guiElements[1].max = guiElements[1].max + 1
+        table.insert(guiElements[1].valueMap, 1, "<unsaved>")
+        guiElements[1].value = 1
+    end
+end
+
+function save()
+    if currentFile then 
+        local str = "return {\n"
+        for k, v in pairs(values) do 
+            str = str .. "\t" .. k .. " = " .. tostring(v) .. ",\n"
+        end
+        str = str .. "}\n"
+        love.filesystem.write("saved/" .. currentFile, str)
+
+        updateFileList()
+    else 
+        saveNew()
+    end
+end
+
+function load()
+    if currentFile then 
+        values = assert(loadstring(love.filesystem.read("saved/" .. currentFile)))()
+        updateFileList()
+    end
+end
+
+function saveNew()
+    local animals = {"Bear", "Zebra", "Moose", "Giraffe", "Llama", "Turtle", "Alligator", "Goat", "Hippo", "Sloth"}
+    local adjectives = {"Angsty", "Depressed", "Ecstatic", "Confused", "Obsessed", "Intrigued", "Lonely", "Emancipated", "Talkative", "Confrontational"}
+    local filename = nil
+    repeat 
+        filename = adjectives[love.math.random(1,#adjectives)] .. animals[love.math.random(1,#animals)] .. ".lua"
+    until not love.filesystem.exists(filename)
+
+    currentFile = filename
+    love.window.setTitle(currentFile .. " - SparklEd")
+    save()
 end
 
 function love.keypressed(key, isrepeat)
     if key == " " and not isrepeat then 
         particleSystem:emit(values.emitAmount)
     end 
+
+    if love.keyboard.isDown("lctrl") then
+        if key == "s" then 
+            save()
+        elseif key == "n" then 
+            saveNew()
+        end
+    end 
 end
 
 function love.mousemoved(x, y, dx, dy)
+    guiElements.hovered = nil
     for _, element in ipairs(guiElements) do 
-        element.hovered = element.value and x > element.x and x < element.x + element.w and y > element.y and y < element.y + element.h 
+        if element.value and x > element.x and x < element.x + element.w and y > element.y and y < element.y + element.h then
+            guiElements.hovered = element
+            break
+        end
     end 
     
     local dragged = guiElements.dragged
@@ -271,15 +344,7 @@ function love.mousemoved(x, y, dx, dy)
 end
 
 function love.mousepressed(x, y, button)
-    -- only one object can be hovered. (This assumption is not yet made in mousemoved)
-    local hovered = nil
-    for _, element in ipairs(guiElements) do 
-        if element.hovered then 
-            hovered = element
-            break
-        end 
-    end
-
+    local hovered = guiElements.hovered
     if hovered and hovered.value then 
         local delta = love.keyboard.isDown("lshift") and hovered.modDelta or hovered.delta
         
@@ -326,10 +391,11 @@ function love.draw()
     local font = love.graphics.getFont()
     local textHeight = font:getHeight()
     
+    local winW, winH = love.window.getDimensions()
     love.graphics.setColor(0, 0, 0, 255)
-    love.graphics.rectangle("fill", margin, margin, panelWidth, love.window.getHeight() - margin*2)
+    love.graphics.rectangle("fill", margin, margin, panelWidth, winH - margin*2)
     love.graphics.setColor(255, 255, 255, 255)
-    love.graphics.rectangle("line", margin, margin, panelWidth, love.window.getHeight() - margin*2)
+    love.graphics.rectangle("line", margin, margin, panelWidth, winH - margin*2)
     
     for _, element in ipairs(guiElements) do 
         if element.label then 
@@ -339,7 +405,7 @@ function love.draw()
                 love.graphics.rectangle("fill", element.x, element.y, element.w * alpha, element.h)
             end
         
-            love.graphics.setColor(element.hovered and {255, 255, 255, 255} or {180, 180, 180, 255})
+            love.graphics.setColor(guiElements.hovered == element and {255, 255, 255, 255} or {180, 180, 180, 255})
             local y = element.y + element.h/2 - textHeight/2
             love.graphics.print(element.label .. (element.value and ":" or ""), element.x + 5, y)
             
@@ -347,31 +413,33 @@ function love.draw()
                 local valueStr = element.valueMap and element.valueMap[element.value] or string.format("%.3f", element.value)
                 love.graphics.print(valueStr, element.x + element.w - font:getWidth(valueStr) - 5, y)  
             end
-            
-            if element.hovered then 
-                love.graphics.setColor(0, 255, 255, 255)
-                love.graphics.rectangle("line", element.x, element.y, element.w, element.h)
-                
-                -- show tooltips
-                local valueInfo = ""
-                if element.valueMap then 
-                    valueInfo = "Possible values: " .. table.concat(element.valueMap, ", ")
-                else
-                    local parts = {}
-                    if element.min then table.insert(parts, "min: " .. element.min) end
-                    if element.max then table.insert(parts, "max: " .. element.max) end
-                    if element.delta then table.insert(parts, "delta: " .. element.delta) end
-                    if element.modDelta then table.insert(parts, "modified delta (left shift): " .. element.modDelta) end
-                    valueInfo = table.concat(parts, ", ")
-                end
-                
-                love.graphics.setColor(255, 255, 255, 255)
-                local ww, wh = love.window.getDimensions()
-                love.graphics.print(valueInfo, ww - font:getWidth(valueInfo) - 10, wh - 25)
-                if element.tooltip then 
-                    love.graphics.print(element.tooltip, ww - font:getWidth(element.tooltip) - 10, wh - 50)
-                end
-            end
         end
     end 
+
+    local tooltip = helpText
+    if guiElements.hovered then 
+        local element = guiElements.hovered
+        tooltip = element.tooltip or ""
+
+        love.graphics.setColor(0, 255, 255, 255)
+        love.graphics.rectangle("line", element.x, element.y, element.w, element.h)
+        
+        -- show tooltips
+        local valueInfo = ""
+        if element.valueMap then 
+            valueInfo = "Possible values: " .. table.concat(element.valueMap, ", ")
+        else
+            local parts = {}
+            if element.min then table.insert(parts, "min: " .. element.min) end
+            if element.max then table.insert(parts, "max: " .. element.max) end
+            if element.delta then table.insert(parts, "delta: " .. element.delta) end
+            if element.modDelta then table.insert(parts, "modified delta (left shift): " .. element.modDelta) end
+            valueInfo = table.concat(parts, ", ")
+        end
+        
+        love.graphics.setColor(255, 255, 255, 255)
+        love.graphics.print(valueInfo, winW - font:getWidth(valueInfo) - 10, winH - 25)
+    end
+    love.graphics.setColor(255, 255, 255, 255)
+    love.graphics.print(tooltip, winW - font:getWidth(tooltip) - 10, winH - 50)
 end
