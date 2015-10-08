@@ -1,7 +1,6 @@
 -- TODO:
---      A way to reset sizes/colors to nil
---      Buttons for Pause, Restart?
 --      Image strips
+--      Buttons for Pause, Restart?
 
 helpText = [[Hover a value and use your mousewheel to increase(up)/decrease(down) it. Press shift to reduce the amount of change.
 You can also use your left mouse button and 'drag' the value to change it (shift is also usable). 
@@ -30,7 +29,8 @@ guiElements = {
             tooltip = "Set the offset position which the particle sprite is rotated around"},
     {label = "Y", key = "offsetY", value = 0, delta = 10, 
             tooltip = "Set the offset position which the particle sprite is rotated around"},
-    {label = "Color Index", key = "colorIndex", value = 1, min = 1, max = 8, integer = true, 
+    {label = "Color count", key = "colorIndexCount", value = 1, min = 1, max = 8, integer = true, noLineBreak = true},
+    {label = "Color index", key = "colorIndex", value = 1, min = 1, max = 1, integer = true, 
             tooltip = "Select one of eight colors, the particle system will interpolate between each color evenly over the particle's lifetime"},
     {label = "R", key = "color1_r", value = 255, min = 0, max = 255, delta = 10, noLineBreak = true, integer = true, tooltip = "Red"},
     {label = "G", key = "color1_g", value = 255, min = 0, max = 255, delta = 10, noLineBreak = true, integer = true, tooltip = "Green"},
@@ -60,7 +60,8 @@ guiElements = {
             tooltip = "Sets the maximum lifetime of the particles (in seconds)"},
     {label = "Relative rotation", key = "relativeRotation", value = 1, min = 1, max = 2, valueMap = {"false", "true"}, integer = true, 
             tooltip = "Sets whether particle angles and rotations are relative to their velocities"},
-    {label = "Size index", key = "sizeIndex", min = 1, max = 8, value = 1, integer = true, 
+    {label = "Size count", key = "sizeIndexCount", value = 1, min = 1, max = 8, integer = true, noLineBreak = true},
+    {label = "Size index", key = "sizeIndex", min = 1, max = 1, value = 1, integer = true, 
             tooltip = "Select one of eight indices, the particle system will interpolate between each size evenly over the particle's lifetime"},
     {label = "Size", key = "size1", value = 1.0, delta = 0.1, 
             tooltip = "Base size of a particle for current index. 1.0 is normal size."},
@@ -187,14 +188,10 @@ function updateParticleSystem()
 
     local colors = {}
     local channels = {"r", "g", "b", "a"}
-    for i = 1, 8 do
-        local broken = false
-        for c = 1, 4 do 
-            local index = (i-1)*4 + c
-            colors[index] = values["color"..i.."_"..channels[c]]
-            if colors[index] == nil then broken = true; break end
+    for i = 1, values.colorIndexCount do
+        for c = 1, 4 do
+            colors[(i-1)*4 + c] = values["color"..i.."_"..channels[c]]
         end
-        if broken then break end
     end
     particleSystem:setColors(unpack(colors))
 
@@ -209,9 +206,8 @@ function updateParticleSystem()
     particleSystem:setRelativeRotation(values.relativeRotation > 1)
 
     local sizes = {}
-    for i = 1, 8 do 
+    for i = 1, values.sizeIndexCount do 
         sizes[i] = values["size"..i]
-        if sizes[i] == nil then break end
     end
     particleSystem:setSizes(unpack(sizes))
 
@@ -243,6 +239,7 @@ function updateValue(element)
             guiElements[i+c].value = values[key]
         end 
     end
+    colorIndexElem.max = values.colorIndexCount
     
     local j, sizeIndexElem = getElementByKey("sizeIndex")
     local key = "size" .. sizeIndexElem.value
@@ -252,6 +249,7 @@ function updateValue(element)
     else 
         guiElements[j+1].value = values[key]
     end
+    sizeIndexElem.max = values.sizeIndexCount
 
     local file = guiElements[1].valueMap[guiElements[1].value]
     if currentFile ~= file and file ~= "<unsaved>" then 
