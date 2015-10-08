@@ -410,7 +410,8 @@ function love.draw()
             love.graphics.print(element.label .. (element.value and ":" or ""), element.x + 5, y)
             
             if element.value then 
-                local valueStr = element.valueMap and element.valueMap[element.value] or string.format("%.3f", element.value)
+                local valueStr = element.valueMap and element.valueMap[element.value] or 
+                                        (element.integer and tonumber(element.value) or string.format("%.3f", element.value))
                 love.graphics.print(valueStr, element.x + element.w - font:getWidth(valueStr) - 5, y)  
             end
         end
