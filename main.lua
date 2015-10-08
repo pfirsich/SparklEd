@@ -1,9 +1,9 @@
 -- TODO:
 --      A way to reset sizes/colors to nil
---      Buttons for Pause, Restart (+ shortcut = space)
+--      Buttons for Pause, Restart?
 --      Image strips
 
-helpText = [[Hover a value and use your mousewheel to increase/decrease it. Press shift to reduce the amount of change.
+helpText = [[Hover a value and use your mousewheel to increase(up)/decrease(down) it. Press shift to reduce the amount of change.
 You can also use your left mouse button and 'drag' the value to change it (shift is also usable). 
 Use lctrl+s to save, lctrl+n to copy the current effect to a new file. And use the 'File' slider in the top left to load files.]]
 
