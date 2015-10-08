@@ -7,6 +7,7 @@ helpText = [[Hover a value and use your mousewheel to increase(up)/decrease(down
 You can also use your left mouse button and 'drag' the value to change it (shift is also usable). 
 Use lctrl+s to save, lctrl+n to copy the current effect to a new file. And use the 'File' slider in the top left to load files.]]
 
+local space = "    "
 guiElements = {
     -- {label = , tooltip = , value = , min = , max = , delta =, modDelta =, noLineBreak = , key = var, valueMap = , integer = }
     {label = "File", key = "filename", value = 1, min = 1, max = 1, integer = true, valueMap = {"<unsaved>"}},
@@ -48,14 +49,14 @@ guiElements = {
             tooltip = "Sets the direction spread (in radians)"},
     {label = "Area spread", key = "areaSpreadType", value = 1, min = 1, max = 3, valueMap = {"Uniform", "Normal", "none"}, 
             tooltip = "Sets the distribution of the area spread"},
-    {label = "dx", key = "areaSpreadX", value = 0, min = 0, delta = 10, noLineBreak = true,
+    {label = space .. "dx", key = "areaSpreadX", value = 0, min = 0, delta = 10, noLineBreak = true,
             tooltip = "Maximum spawn distance from the emitter for uniform and standard deviation for normal distribution."},
-    {label = "dy", key = "areaSpreadY", value = 0, min = 0, delta = 10, 
+    {label = space .. "dy", key = "areaSpreadY", value = 0, min = 0, delta = 10, 
             tooltip = "Maximum spawn distance from the emitter for uniform and standard deviation for normal distribution."},
     {},
     {label = "Particle lifetime min", key = "particleLifetimeMin", value = 1.0, min = 0, delta = 1, modDelta = 0.05, 
             tooltip = "Sets the minimum lifetime of the particles (in seconds)"},
-    {label = "max", key = "particleLifetimeMax", value = 1.0, min = 0, delta = 1, modDelta = 0.05, 
+    {label = space .. "max", key = "particleLifetimeMax", value = 1.0, min = 0, delta = 1, modDelta = 0.05, 
             tooltip = "Sets the maximum lifetime of the particles (in seconds)"},
     {label = "Relative rotation", key = "relativeRotation", value = 1, min = 1, max = 2, valueMap = {"false", "true"}, integer = true, 
             tooltip = "Sets whether particle angles and rotations are relative to their velocities"},
@@ -67,36 +68,36 @@ guiElements = {
             tooltip = "Size variation of a particle for current index"},
     {label = "Rotation min", key = "rotationMin", value = 0, min = 0, max = 2*math.pi, delta = 0.1, 
             tooltip = "Sets the rotation of the image upon particle creation (in radians)"},
-    {label = "max", key = "rotationMax", value = 0, min = 0, max = 2*math.pi, delta = 0.1, 
+    {label = space .. "max", key = "rotationMax", value = 0, min = 0, max = 2*math.pi, delta = 0.1, 
             tooltip = "Sets the rotation of the image upon particle creation (in radians)"},
     {label = "Speed min", key = "speedMin", value = 400, delta = 10, 
             tooltip = "Sets the speed of the particles"},
-    {label = "Speed max", key = "speedMax", value = 500, delta = 10, 
+    {label = space .. "Speed max", key = "speedMax", value = 500, delta = 10, 
             tooltip = "Sets the speed of the particles"},
     {label = "Linear acceleration"},
-    {label = "x min", key = "linAccelXMin", value = 0, delta = 0.1, modDelta = 0.05, noLineBreak = true, 
+    {label = space .. "x min", key = "linAccelXMin", value = 0, delta = 0.1, modDelta = 0.05, noLineBreak = true, 
             tooltip="Sets the linear acceleration (acceleration along the x and y axes) for particles"},
     {label = "y min", key = "linAccelYMin", value = 0, delta = 0.1, modDelta = 0.05, 
             tooltip="Sets the linear acceleration (acceleration along the x and y axes) for particles"},
-    {label = "x max", key = "linAccelXMax", value = 0, delta = 0.1, modDelta = 0.05, noLineBreak = true, 
+    {label = space .. "x max", key = "linAccelXMax", value = 0, delta = 0.1, modDelta = 0.05, noLineBreak = true, 
             tooltip = "Sets the linear acceleration (acceleration along the x and y axes) for particles"},
     {label = "y max", key = "linAccelYMax", value = 0, delta = 0.1, modDelta = 0.05, 
             tooltip = "Sets the linear acceleration (acceleration along the x and y axes) for particles"},
     {label = "Radial acceleration min", key = "radAccelMin", value = 0, delta = 0.1, modDelta = 0.05, 
             tooltip = "Set the radial acceleration (away from the emitter)"},
-    {label = "max", key = "radAccelMax", value = 0, delta = 0.1, modDelta = 0.05, 
+    {label = space .. "max", key = "radAccelMax", value = 0, delta = 0.1, modDelta = 0.05, 
             tooltip = "Set the radial acceleration (away from the emitter)"},
     {label = "Tangential acceleration min", key = "tangAccelMin", value = 0, delta = 0.1, modDelta = 0.05, 
             tooltip = "Sets the tangential acceleration (acceleration perpendicular to the particle's direction)"},
-    {label = "max", key = "tangAccelMax", value = 0, delta = 0.1, modDelta = 0.05, 
+    {label = space .. "max", key = "tangAccelMax", value = 0, delta = 0.1, modDelta = 0.05, 
             tooltip = "Sets the tangential acceleration (acceleration perpendicular to the particle's direction)"},
     {label = "Linear damping min", key = "linDampMin", value = 0, delta = 0.1, modDelta = 0.05, 
             tooltip = "Sets the amount of linear damping (constant deceleration) for particles"},
-    {label = "max", key = "linDampMax", value = 0, delta = 0.1, modDelta = 0.05, 
+    {label = space .. "max", key = "linDampMax", value = 0, delta = 0.1, modDelta = 0.05, 
             tooltip = "Sets the amount of linear damping (constant deceleration) for particles"},
-    {label = "Spin min", key = "spinMin", value = 0, delta = 0.1, modDelta = 0.05, noLineBreak = true, 
+    {label = "Spin min", key = "spinMin", value = 0, delta = 0.1, modDelta = 0.05, 
             tooltip = "Sets the spin of the sprite"},
-    {label = "max", key = "spinMax", value = 0, delta = 0.1, modDelta = 0.05, 
+    {label = space .. "max", key = "spinMax", value = 0, delta = 0.1, modDelta = 0.05, 
             tooltip = "Sets the spin of the sprite"},
     {label = "Spin variation", key = "spinVariation", value = 0, min = 0, max = 1, delta = 0.1, 
             tooltip = "Sets the amount of spin variation"},
@@ -130,7 +131,7 @@ function love.load()
     
     margin = 5
     panelWidth = 300
-    local lineHeight = 20
+    local lineHeight = 19
     local cursorX, cursorY = margin, 5
     for _, line in ipairs(guiElements.lines) do 
         for _, element in ipairs(line) do
@@ -300,8 +301,8 @@ function load()
 end
 
 function saveNew()
-    local animals = {"Bear", "Zebra", "Moose", "Giraffe", "Llama", "Turtle", "Alligator", "Goat", "Hippo", "Sloth"}
-    local adjectives = {"Angsty", "Depressed", "Ecstatic", "Confused", "Obsessed", "Intrigued", "Lonely", "Emancipated", "Talkative", "Confrontational"}
+    local animals = {"Bear", "Zebra", "Moose", "Giraffe", "Llama", "Turtle", "Alligator", "Goat", "Hippo", "Sloth", "Koala"}
+    local adjectives = {"Angsty", "Depressed", "Ecstatic", "Confused", "Obsessed", "Intrigued", "Lonely", "Emancipated", "Talkative", "Confrontational", "Aroused"}
     local filename = nil
     repeat 
         filename = adjectives[love.math.random(1,#adjectives)] .. animals[love.math.random(1,#animals)] .. ".lua"
