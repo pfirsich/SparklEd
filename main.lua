@@ -78,21 +78,21 @@ guiElements = {
     {label = space .. "Speed max", key = "speedMax", value = 500, delta = 10, 
             tooltip = "Sets the speed of the particles"},
     {label = "Linear acceleration"},
-    {label = space .. "x min", key = "linAccelXMin", value = 0, delta = 0.1, modDelta = 0.05, noLineBreak = true, 
+    {label = space .. "x min", key = "linAccelXMin", value = 0, delta = 10.1, modDelta = 0.05, noLineBreak = true, 
             tooltip="Sets the linear acceleration (acceleration along the x and y axes) for particles"},
-    {label = "y min", key = "linAccelYMin", value = 0, delta = 0.1, modDelta = 0.05, 
+    {label = "y min", key = "linAccelYMin", value = 0, delta = 10.1, modDelta = 0.05, 
             tooltip="Sets the linear acceleration (acceleration along the x and y axes) for particles"},
-    {label = space .. "x max", key = "linAccelXMax", value = 0, delta = 0.1, modDelta = 0.05, noLineBreak = true, 
+    {label = space .. "x max", key = "linAccelXMax", value = 0, delta = 10.1, modDelta = 0.05, noLineBreak = true, 
             tooltip = "Sets the linear acceleration (acceleration along the x and y axes) for particles"},
-    {label = "y max", key = "linAccelYMax", value = 0, delta = 0.1, modDelta = 0.05, 
+    {label = "y max", key = "linAccelYMax", value = 0, delta = 10.1, modDelta = 0.05, 
             tooltip = "Sets the linear acceleration (acceleration along the x and y axes) for particles"},
-    {label = "Radial acceleration min", key = "radAccelMin", value = 0, delta = 0.1, modDelta = 0.05, 
+    {label = "Radial acceleration min", key = "radAccelMin", value = 0, delta = 10.1, modDelta = 0.05, 
             tooltip = "Set the radial acceleration (away from the emitter)"},
-    {label = space .. "max", key = "radAccelMax", value = 0, delta = 0.1, modDelta = 0.05, 
+    {label = space .. "max", key = "radAccelMax", value = 0, delta = 10.1, modDelta = 0.05, 
             tooltip = "Set the radial acceleration (away from the emitter)"},
-    {label = "Tangential acceleration min", key = "tangAccelMin", value = 0, delta = 0.1, modDelta = 0.05, 
+    {label = "Tangential acceleration min", key = "tangAccelMin", value = 0, delta = 10.1, modDelta = 0.05, 
             tooltip = "Sets the tangential acceleration (acceleration perpendicular to the particle's direction)"},
-    {label = space .. "max", key = "tangAccelMax", value = 0, delta = 0.1, modDelta = 0.05, 
+    {label = space .. "max", key = "tangAccelMax", value = 0, delta = 10.1, modDelta = 0.05, 
             tooltip = "Sets the tangential acceleration (acceleration perpendicular to the particle's direction)"},
     {label = "Linear damping min", key = "linDampMin", value = 0, delta = 0.1, modDelta = 0.05, 
             tooltip = "Sets the amount of linear damping (constant deceleration) for particles"},
@@ -275,13 +275,15 @@ function updateValue(element)
     
     -- same with sizes
     local j, sizeIndexElem = getElementByKey("sizeIndex")
-    local key = "size" .. sizeIndexElem.value
+    for k = 1, sizeIndexElem.value do 
+        local key = "size" .. k 
+        if values[key] == nil then 
+            values[key] = guiElements[j+1].value 
+        end 
+    end 
+    local key = "size" .. sizeIndexElem.value 
     guiElements[j+1].key = key
-    if values[key] == nil then 
-        values[key] = guiElements[j+1].value 
-    else 
-        guiElements[j+1].value = values[key]
-    end
+    guiElements[j+1].value = values[key]
     sizeIndexElem.max = values.sizeIndexCount
 
     -- load file if file changed
