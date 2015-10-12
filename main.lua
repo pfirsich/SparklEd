@@ -380,7 +380,7 @@ function love.mousepressed(x, y, button)
         updateValue(hovered)
     end
 
-    if x > panelWidth then 
+    if x > panelWidth + margin*2 then 
         particleSystem:setPosition(x, y)
     end 
 end
