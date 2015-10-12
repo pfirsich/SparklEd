@@ -166,7 +166,7 @@ function addEmitter()
         emitter.object:setPosition((love.window.getWidth() + panelWidth)/2, love.window.getHeight()/2)
     end
 
-    emitter.values = {}
+    emitter.values = {imageName = textureElement.valueMap[textureElement.value]}
     for _, element in ipairs(guiElements) do 
         if element.key then emitter.values[element.key] = element.value end
     end
@@ -194,12 +194,14 @@ function getElementByKey(key)
     end 
 end
 
-function updateParticleSystem()    
-    local particleSystem = emitters[values.emitterIndex].object
+function updateParticleSystem(emitter)    
+    if emitter == nil then emitter = emitters[values.emitterIndex] end
+    local particleSystem = emitter.object
+    local values = emitter.values
+
     if particleSystem:getBufferSize() ~= values.bufferSize then particleSystem:setBufferSize(values.bufferSize) end
-    
-    local i, textureElem = getElementByKey("imageIndex")
-    local path = "particleImages/" .. textureElem.valueMap[textureElem.value]
+
+    local path = "particleImages/" .. values.imageName
     local texture = getImage(path)
     if particleSystem:getTexture() ~= texture then 
         particleSystem:setTexture(texture) 
@@ -251,7 +253,13 @@ function updateValue(element)
     if element.min and element.value < element.min then element.value = element.min end
     if element.max and element.value > element.max then element.value = element.max end
     if element.integer or element.valueMap then element.value = math.floor(element.value + 0.5) end
-    values[element.key] = element.value
+    if element.global then 
+        for _, emitter in ipairs(emitters) do 
+            emitter.values[element.key] = element.value 
+        end 
+    else 
+        values[element.key] = element.value
+    end
 
     -- init new color indices, fill in color with current color
     local i, colorIndexElem = getElementByKey("colorIndex")
@@ -286,13 +294,6 @@ function updateValue(element)
     guiElements[j+1].value = values[key]
     sizeIndexElem.max = values.sizeIndexCount
 
-    -- load file if file changed
-    local file = guiElements[1].valueMap[guiElements[1].value]
-    if currentFile ~= file and file ~= "<unsaved>" then 
-        currentFile = file
-        load()
-    end 
-
     -- change emitter if emitter changed
     for m = #emitters + 1, values.emitterCount do 
         addEmitter()
@@ -306,6 +307,17 @@ function updateValue(element)
         if element.global then values[element.key] = oldValues[element.key] end
         element.value = values[element.key]
     end 
+
+    -- load file if file changed
+    local file = guiElements[1].valueMap[guiElements[1].value]
+    if currentFile ~= file and file ~= "<unsaved>" then 
+        currentFile = file
+        load()
+    end 
+
+    -- update image path
+    local i, textureElem = getElementByKey("imageIndex")
+    values.imageName = textureElem.valueMap[textureElem.value]
 
     updateParticleSystem()
 end
@@ -329,8 +341,12 @@ end
 function save()
     if currentFile then 
         local str = "return {\n"
-        for k, v in pairs(values) do 
-            str = str .. "\t" .. k .. " = " .. tostring(v) .. ",\n"
+        for i, emitter in ipairs(emitters) do 
+            str = str .. "\t{"
+            for k, v in pairs(emitter.values) do 
+                str = str .. "\t\t" .. k .. " = " .. (type(v) == "number" and tostring(v) or '"'.. v ..'"') .. ",\n"
+            end
+            str = str .. "\t},\n"
         end
         str = str .. "}\n"
         love.filesystem.write("saved/" .. currentFile, str)
@@ -343,7 +359,14 @@ end
 
 function load()
     if currentFile then 
-        values = assert(loadstring(love.filesystem.read("saved/" .. currentFile)))()
+        emitters = {}
+        local fileTable = assert(loadstring(love.filesystem.read("saved/" .. currentFile)))()
+        for i, emitterValues in ipairs(fileTable) do 
+            addEmitter()
+            emitters[i].values = emitterValues
+            updateParticleSystem(emitters[i])
+        end 
+        values = emitters[1].values
         updateFileList()
     end
 end
