@@ -9,16 +9,16 @@ Use lctrl+s to save, lctrl+n to copy the current effect to a new file. And use t
 local space = "    "
 guiElements = {
     -- {label = , tooltip = , value = , min = , max = , delta =, modDelta =, noLineBreak = , key = var, valueMap = , integer = }
-    {label = "File", key = "filename", value = 1, min = 1, max = 1, integer = true, valueMap = {"<unsaved>"}},
+    {label = "File", key = "filename", value = 1, min = 1, max = 1, integer = true, valueMap = {"<unsaved>"}, global = true},
     {},
+    {label = "Blending", key = "blendMode", value = 1, min = 1, max = 6, valueMap = {"Additive", "Alpha", "Subtractive", "Multiplicative", "Premultiplied", "Replace"}, global = true},
     {label = "Background color"},
-    {label = "R", key = "bgColorR", value = 0, min = 0, max = 255, delta = 10, noLineBreak = true, integer = true},
-    {label = "G", key = "bgColorG", value = 0, min = 0, max = 255, delta = 10, noLineBreak = true, integer = true},
-    {label = "B", key = "bgColorB", value = 0, min = 0, max = 255, delta = 10, integer = true},
-    {label = "Emitter count", key = "emitterCount", value = 1, min = 1, max = 8, integer = true, noLineBreak = true},
-    {label = "Emitter index", key = "emitterIndex", value = 1, min = 1, max = 1, integer = true},
+    {label = "R", key = "bgColorR", value = 0, min = 0, max = 255, delta = 10, noLineBreak = true, integer = true, global = true},
+    {label = "G", key = "bgColorG", value = 0, min = 0, max = 255, delta = 10, noLineBreak = true, integer = true, global = true},
+    {label = "B", key = "bgColorB", value = 0, min = 0, max = 255, delta = 10, integer = true, global = true},
+    {label = "Emitter count", key = "emitterCount", value = 1, min = 1, max = 8, integer = true, noLineBreak = true, global = true},
+    {label = "Emitter index", key = "emitterIndex", value = 1, min = 1, max = 1, integer = true, global = true},
     {},
-    {label = "Blending", key = "blendMode", value = 1, min = 1, max = 6, valueMap = {"Additive", "Alpha", "Subtractive", "Multiplicative", "Premultiplied", "Replace"}},
     {label  = "Insert mode", key = "insertMode", value = 1, min = 1, max = 3, valueMap = {"Top", "Bottom", "Random"}, 
             tooltip = "Whether newly spawned particles appear on top, below or anywhere within existing particles"},
     {label = "Buffersize", key = "bufferSize", value = 100, min = 1, delta = 100, integer = true, 
@@ -107,7 +107,11 @@ guiElements = {
 }
 
 function love.load()
-    values = {} -- maybe remove this and use getElementByKey -> no, because it's needed for colors and sizes
+    -- finish all element properties
+    for _, element in ipairs(guiElements) do 
+        if element.delta == nil then element.delta = 1 end
+        if element.modDelta == nil then element.modDelta = element.delta/10 end
+    end
 
     -- update particle texture list    
     local i, textureElement = getElementByKey("imageIndex")
@@ -139,20 +143,36 @@ function love.load()
     end
     
     -- init particle emitter
-    local initImage = getImage("particleImages/" .. textureElement.valueMap[textureElement.value])
-    particleSystem = love.graphics.newParticleSystem(initImage, 100)
-    particleSystem:setPosition((love.window.getWidth() + panelWidth)/2, love.window.getHeight()/2)
-    select(2, getElementByKey("offsetX")).value = initImage:getWidth()/2
-    select(2, getElementByKey("offsetY")).value = initImage:getHeight()/2
-    
-    for _, element in ipairs(guiElements) do 
-        if element.key then values[element.key] = element.value end
-        if element.delta == nil then element.delta = 1 end
-        if element.modDelta == nil then element.modDelta = element.delta/10 end
-    end
+    values = {} -- maybe remove this and use getElementByKey -> no, because it's needed for colors and sizes
+    emitters = {}
+    addEmitter()
 
     updateParticleSystem()
     updateFileList()
+end
+
+function addEmitter()
+    local emitter = {}
+
+    local i, textureElement = getElementByKey("imageIndex")
+    local initImage = getImage("particleImages/" .. textureElement.valueMap[textureElement.value])
+    emitter.object = love.graphics.newParticleSystem(initImage, select(2, getElementByKey("bufferSize")).value)
+    select(2, getElementByKey("offsetX")).value = initImage:getWidth()/2
+    select(2, getElementByKey("offsetY")).value = initImage:getHeight()/2
+
+    if #emitters > 0 then 
+        emitter.object:setPosition(emitters[1].object:getPosition())
+    else 
+        emitter.object:setPosition((love.window.getWidth() + panelWidth)/2, love.window.getHeight()/2)
+    end
+
+    emitter.values = {}
+    for _, element in ipairs(guiElements) do 
+        if element.key then emitter.values[element.key] = element.value end
+    end
+    values = emitter.values 
+
+    table.insert(emitters, emitter)
 end
 
 do
@@ -175,6 +195,7 @@ function getElementByKey(key)
 end
 
 function updateParticleSystem()    
+    local particleSystem = emitters[values.emitterIndex].object
     if particleSystem:getBufferSize() ~= values.bufferSize then particleSystem:setBufferSize(values.bufferSize) end
     
     local i, textureElem = getElementByKey("imageIndex")
@@ -270,6 +291,20 @@ function updateValue(element)
         load()
     end 
 
+    -- change emitter if emitter changed
+    for m = #emitters + 1, values.emitterCount do 
+        addEmitter()
+    end 
+    select(2, getElementByKey("emitterIndex")).max = values.emitterCount
+
+    -- update values and copy global elements
+    local oldValues = values 
+    values = emitters[values.emitterIndex].values
+    for _, element in ipairs(guiElements) do 
+        if element.global then values[element.key] = oldValues[element.key] end
+        element.value = values[element.key]
+    end 
+
     updateParticleSystem()
 end
 
@@ -326,7 +361,9 @@ end
 
 function love.keypressed(key, isrepeat)
     if key == " " and not isrepeat then 
-        particleSystem:emit(values.emitAmount)
+        for i = 1, values.emitterCount do 
+            emitters[i].object:emit(emitters[i].values.emitAmount)
+        end
     end 
 
     if love.keyboard.isDown("lctrl") then
@@ -380,7 +417,9 @@ function love.mousepressed(x, y, button)
     end
 
     if x > panelWidth + margin*2 then 
-        particleSystem:setPosition(x, y)
+        for _, emitter in ipairs(emitters) do 
+            emitter.object:setPosition(x, y)
+        end
     end 
 end
 
@@ -390,14 +429,18 @@ end
 
 function love.update(dt)
     love.graphics.setBackgroundColor(values.bgColorR, values.bgColorG, values.bgColorB)
-    particleSystem:update(dt)
+    for i = 1, values.emitterCount do 
+        emitters[i].object:update(dt)
+    end
 end
 
 function love.draw()
 
     local blendModes = {"additive", "alpha", "subtractive", "multiplicative", "premultiplied", "replace"}
     love.graphics.setBlendMode(blendModes[values.blendMode])
-    love.graphics.draw(particleSystem)
+    for i = 1, values.emitterCount do 
+        love.graphics.draw(emitters[i].object)
+    end
 
     love.graphics.setBlendMode("alpha")
     local font = love.graphics.getFont()
