@@ -233,19 +233,27 @@ function updateValue(element)
     if element.integer or element.valueMap then element.value = math.floor(element.value + 0.5) end
     values[element.key] = element.value
 
+    -- init new color indices, fill in color with current color
     local i, colorIndexElem = getElementByKey("colorIndex")
     local channels = {"r", "g", "b", "a"}
+    
+    for k = 1, colorIndexElem.value do -- initialize new color values (use this loop since some indices could have been skipped)
+        for c = 1, 4 do 
+            local key = "color" .. k .. "_" .. channels[c]
+            if values[key] == nil then 
+                values[key] = guiElements[i+c].value 
+            end 
+        end 
+    end 
+    
     for c = 1, 4 do
         local key = "color" .. colorIndexElem.value .. "_" .. channels[c]
         guiElements[i+c].key = key; 
-        if values[key] == nil then 
-            values[key] = guiElements[i+c].value 
-        else
-            guiElements[i+c].value = values[key]
-        end 
+        guiElements[i+c].value = values[key]
     end
     colorIndexElem.max = values.colorIndexCount
     
+    -- same with sizes
     local j, sizeIndexElem = getElementByKey("sizeIndex")
     local key = "size" .. sizeIndexElem.value
     guiElements[j+1].key = key
@@ -256,6 +264,7 @@ function updateValue(element)
     end
     sizeIndexElem.max = values.sizeIndexCount
 
+    -- load file if file changed
     local file = guiElements[1].valueMap[guiElements[1].value]
     if currentFile ~= file and file ~= "<unsaved>" then 
         currentFile = file
