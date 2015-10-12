@@ -15,6 +15,8 @@ guiElements = {
     {label = "R", key = "bgColorR", value = 0, min = 0, max = 255, delta = 10, noLineBreak = true, integer = true},
     {label = "G", key = "bgColorG", value = 0, min = 0, max = 255, delta = 10, noLineBreak = true, integer = true},
     {label = "B", key = "bgColorB", value = 0, min = 0, max = 255, delta = 10, integer = true},
+    {label = "Emitter count", key = "emitterCount", value = 1, min = 1, max = 8, integer = true, noLineBreak = true},
+    {label = "Emitter index", key = "emitterIndex", value = 1, min = 1, max = 1, integer = true},
     {},
     {label = "Blending", key = "blendMode", value = 1, min = 1, max = 6, valueMap = {"Additive", "Alpha", "Subtractive", "Multiplicative", "Premultiplied", "Replace"}},
     {label  = "Insert mode", key = "insertMode", value = 1, min = 1, max = 3, valueMap = {"Top", "Bottom", "Random"}, 
@@ -24,7 +26,7 @@ guiElements = {
     {},
     {label = "Texture", key = "imageIndex", value = 1, min = 1, max = 1, valueMap = {"cosine.png"}},
     {label = "#Images in strip", key = "imagesInStrip", value = 1, min = 1, integer = true, 
-            tooltip = "Allows the use of sprite sheets to animate particles over lifetime"},
+            tooltip = "Allows the use of sprite sheets to animate particles over lifetime (not yet implemented!)"},
     {label = "Offset X", key = "offsetX", value = 0, delta = 10, noLineBreak = true, 
             tooltip = "Set the offset position which the particle sprite is rotated around"},
     {label = "Y", key = "offsetY", value = 0, delta = 10, 
@@ -116,12 +118,6 @@ function love.load()
     textureElement.max = #textureElement.valueMap
     assert(#textureElement.valueMap > 0, "At least one image must be present in ./particleImages/.")
     
-    for _, element in ipairs(guiElements) do 
-        if element.key then values[element.key] = element.value end
-        if element.delta == nil then element.delta = 1 end
-        if element.modDelta == nil then element.modDelta = element.delta/10 end
-    end
-    
     guiElements.lines = {{}}
     for _, element in ipairs(guiElements) do 
         table.insert(guiElements.lines[#guiElements.lines], element)
@@ -147,9 +143,16 @@ function love.load()
     local initImage = getImage("particleImages/" .. textureElement.valueMap[textureElement.value])
     particleSystem = love.graphics.newParticleSystem(initImage, 100)
     particleSystem:setPosition((love.window.getWidth() + panelWidth)/2, love.window.getHeight()/2)
-    values.offsetX, values.offsetY = initImage:getWidth()/2, initImage:getHeight()/2
-    updateParticleSystem()
+    select(2, getElementByKey("offsetX")).value = initImage:getWidth()/2
+    select(2, getElementByKey("offsetY")).value = initImage:getHeight()/2
+    
+    for _, element in ipairs(guiElements) do 
+        if element.key then values[element.key] = element.value end
+        if element.delta == nil then element.delta = 1 end
+        if element.modDelta == nil then element.modDelta = element.delta/10 end
+    end
 
+    updateParticleSystem()
     updateFileList()
 end
 
@@ -182,6 +185,8 @@ function updateParticleSystem()
         particleSystem:setTexture(texture) 
         values.offsetX = texture:getWidth()/2
         values.offsetY = texture:getHeight()/2
+        select(2, getElementByKey("offsetX")).value = values.offsetX
+        select(2, getElementByKey("offsetY")).value = values.offsetY
     end
     
     particleSystem:setOffset(values.offsetX, values.offsetY)
