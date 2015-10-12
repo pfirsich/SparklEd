@@ -107,17 +107,15 @@ guiElements = {
 }
 
 function love.load()
-    values = {} -- maybe remove this and use getElementByKey
+    values = {} -- maybe remove this and use getElementByKey -> no, because it's needed for colors and sizes
 
+    -- update particle texture list    
     local i, textureElement = getElementByKey("imageIndex")
-    textureElement.valueMap = {}
-    local files = love.filesystem.getDirectoryItems("particleImages")
-    for i, file in ipairs(files) do 
-        textureElement.valueMap[i] = file
-    end
+    textureElement.valueMap = love.filesystem.getDirectoryItems("particleImages")
     textureElement.max = #textureElement.valueMap
     assert(#textureElement.valueMap > 0, "At least one image must be present in ./particleImages/.")
     
+    -- layout element positions and sizes
     guiElements.lines = {{}}
     for _, element in ipairs(guiElements) do 
         table.insert(guiElements.lines[#guiElements.lines], element)
@@ -140,6 +138,7 @@ function love.load()
         cursorY = cursorY + lineHeight
     end
     
+    -- init particle emitter
     local initImage = getImage("particleImages/" .. textureElement.valueMap[textureElement.value])
     particleSystem = love.graphics.newParticleSystem(initImage, 100)
     particleSystem:setPosition((love.window.getWidth() + panelWidth)/2, love.window.getHeight()/2)
