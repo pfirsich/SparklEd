@@ -411,6 +411,20 @@ function love.keypressed(key, isrepeat)
                 currentFile = file
                 load()
             end
+        elseif key == "c" then
+            local hovered = guiElements.hovered
+            if hovered and hovered.value then
+                love.system.setClipboardText(tostring(hovered.value))
+            end
+        elseif key == "v" then
+            local hovered = guiElements.hovered
+            if hovered and hovered.value then
+                val = tonumber(love.system.getClipboardText())
+                if val then
+                    hovered.value = val
+                    updateValue(hovered)
+                end
+            end
         end
     end
 end
