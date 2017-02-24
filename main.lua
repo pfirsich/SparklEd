@@ -47,9 +47,9 @@ guiElements = {
             tooltip = "Sets the amount of particles emitted per second"},
     {label = "Emit amount", key = "emitAmount", value = 20, min = 0, delta = 5, modDelta = 1, integer = true,
             tooltip = "For certain (non-continous) effects you should set the emission rate to 0 and using <space> to emit particles manually"},
-    {label = "Direction", key = "direction", value = 1.5*math.pi, min = 0.0, max = 2.0*math.pi, delta = 0.1,
+    {label = "Direction", key = "direction", value = 270, min = 0.0, max = 360.0, delta = 10.0,
             tooltip = "Sets the direction the particles will be emitted in (in radians)"},
-    {label = "Direction spread", key = "directionSpread", value = 0.0, min = 0, max = 2*math.pi, delta = 0.1,
+    {label = "Direction spread", key = "directionSpread", value = 0.0, min = 0.0, max = 360.0, delta = 10.0,
             tooltip = "Sets the direction spread (in radians)"},
     {label = "Area spread", key = "areaSpreadType", value = 1, min = 1, max = 3, valueMap = {"Uniform", "Normal", "none"},
             tooltip = "Sets the distribution of the area spread"},
@@ -71,9 +71,9 @@ guiElements = {
             tooltip = "Base size of a particle for current index. 1.0 is normal size."},
     {label = "Size variation", key = "sizeVariation", value = 0.0, min = 0, max = 1, delta = 0.1,
             tooltip = "Size variation of a particle for current index"},
-    {label = "Rotation min", key = "rotationMin", value = 0, min = 0, max = 2*math.pi, delta = 0.1,
+    {label = "Rotation min", key = "rotationMin", value = 0, min = 0, max = 360.0, delta = 0.1,
             tooltip = "Sets the rotation of the image upon particle creation (in radians)"},
-    {label = space .. "max", key = "rotationMax", value = 0, min = 0, max = 2*math.pi, delta = 0.1,
+    {label = space .. "max", key = "rotationMax", value = 0, min = 0, max = 360.0, delta = 0.1,
             tooltip = "Sets the rotation of the image upon particle creation (in radians)"},
     {label = "Speed min", key = "speedMin", value = 400, delta = 10,
             tooltip = "Sets the speed of the particles"},
@@ -236,8 +236,8 @@ function updateParticleSystem(emitter)
 
     particleSystem:setEmitterLifetime(values.emitterLifetime)
     particleSystem:setEmissionRate(values.emissionRate)
-    particleSystem:setDirection(values.direction)
-    particleSystem:setSpread(values.directionSpread)
+    particleSystem:setDirection(values.direction * math.pi / 180.0)
+    particleSystem:setSpread(values.directionSpread * math.pi / 180.0)
     local spreadType = {"uniform", "normal", "none"}
     particleSystem:setAreaSpread(spreadType[values.areaSpreadType], values.areaSpreadX, values.areaSpreadY)
 
@@ -251,7 +251,7 @@ function updateParticleSystem(emitter)
     particleSystem:setSizes(unpack(sizes))
 
     particleSystem:setSizeVariation(values.sizeVariation)
-    particleSystem:setRotation(values.rotationMin, values.rotationMax)
+    particleSystem:setRotation(values.rotationMin * math.pi / 180.0, values.rotationMax * math.pi / 180.0)
     particleSystem:setSpeed(values.speedMin, values.speedMax)
     particleSystem:setLinearAcceleration(values.linAccelXMin, values.linAccelYMin, values.linAccelXMax, values.linAccelYMax)
     particleSystem:setRadialAcceleration(values.radAccelMin, values.radAccelMax)
