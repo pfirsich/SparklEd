@@ -515,6 +515,7 @@ function love.draw()
         if element.label then
             if element.min and element.max then
                 local alpha = (element.value - element.min) / (element.max - element.min)
+                if element.max - element.min < 1e-5 then alpha = 1.0 end
                 love.graphics.setColor(50, 50, 0, 255)
                 love.graphics.rectangle("fill", element.x, element.y, element.w * alpha, element.h)
             end
