@@ -1,6 +1,7 @@
 -- TODO:
---      Image strips
 --      Buttons for Pause, Restart?
+--      Blending per Emitter?
+--      It seems like for multiple emitters multiple colors might crash when changing the current emitter index
 
 helpText = [[Hover a value and use your mousewheel to increase(up)/decrease(down) it. Press shift to reduce the amount of change.
 You can also use your left mouse button and 'drag' the value to change it (shift is also usable).
@@ -205,13 +206,23 @@ function updateParticleSystem(emitter)
     local texture = getImage(path)
     if particleSystem:getTexture() ~= texture then
         particleSystem:setTexture(texture)
+        -- TODO: The following two lines make trouble when loading something with an image with a non-default offset
         values.offsetX = texture:getWidth()/2
         values.offsetY = texture:getHeight()/2
         select(2, getElementByKey("offsetX")).value = values.offsetX
         select(2, getElementByKey("offsetY")).value = values.offsetY
     end
-
     particleSystem:setOffset(values.offsetX, values.offsetY)
+
+    -- update quads every time
+    local quads = {}
+    local imageCount = select(2, getElementByKey("imagesInStrip")).value
+    local w, h = texture:getWidth() / imageCount, texture:getHeight()
+    for i = 1, imageCount do
+        x, y = (i-1)*w, 0
+        table.insert(quads, love.graphics.newQuad(x, y, w, h, texture:getWidth(), h))
+    end
+    particleSystem:setQuads(unpack(quads))
 
     local colors = {}
     local channels = {"r", "g", "b", "a"}
