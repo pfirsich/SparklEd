@@ -394,6 +394,8 @@ end
 function love.keypressed(key, isrepeat)
     if key == "space" then
         for i = 1, values.emitterCount do
+            emitters[i].object:reset()
+            emitters[i].object:start()
             emitters[i].object:emit(emitters[i].values.emitAmount)
         end
     end
