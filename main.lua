@@ -10,7 +10,8 @@ Use lctrl+s to save, lctrl+n to copy the current effect to a new file. And use t
 local space = "    "
 guiElements = {
     -- {label = , tooltip = , value = , min = , max = , delta =, modDelta =, noLineBreak = , key = var, valueMap = , integer = }
-    {label = "File", key = "filename", value = 1, min = 1, max = 1, integer = true, valueMap = {"<unsaved>"}, global = true},
+    {label = "File", key = "filename", value = 1, min = 1, max = 1, integer = true, valueMap = {"<unsaved>"}, global = true,
+            tooltip = "Press lctrl+s to save, lcltr+n to save to new file, if you are currently working in a file already. Press lctrl+l to load the selected file"},
     {},
     {label = "Blending", key = "blendMode", value = 1, min = 1, max = 6, valueMap = {"Additive", "Alpha", "Subtractive", "Multiplicative", "Premultiplied", "Replace"}, global = true},
     {label = "Background color"},
@@ -319,13 +320,6 @@ function updateValue(element)
         element.value = values[element.key]
     end
 
-    -- load file if file changed
-    local file = guiElements[1].valueMap[guiElements[1].value]
-    if currentFile ~= file and file ~= "<unsaved>" then
-        currentFile = file
-        load()
-    end
-
     -- update image path
     local i, textureElem = getElementByKey("imageIndex")
     values.imageName = textureElem.valueMap[textureElem.value]
@@ -360,6 +354,7 @@ function save()
             str = str .. "\t},\n"
         end
         str = str .. "}\n"
+        love.filesystem.createDirectory("saved")
         love.filesystem.write("saved/" .. currentFile, str)
 
         updateFileList()
@@ -378,6 +373,7 @@ function load()
             updateParticleSystem(emitters[i])
         end
         values = emitters[1].values
+        updateValue(guiElements[1])
         updateFileList()
     end
 end
@@ -407,6 +403,12 @@ function love.keypressed(key, isrepeat)
             save()
         elseif key == "n" then
             saveNew()
+        elseif key == "l" then
+            local file = guiElements[1].valueMap[guiElements[1].value]
+            if file ~= "<unsaved>" then
+                currentFile = file
+                load()
+            end
         end
     end
 end
